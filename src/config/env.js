@@ -10,6 +10,7 @@ const env = {
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   JWT_RESET_EXPIRES_IN: process.env.JWT_RESET_EXPIRES_IN || '10m',
+  PASSWORD_RESET_URL: process.env.PASSWORD_RESET_URL,
   BREVO_API_KEY: process.env.BREVO_API_KEY,
   BREVO_SENDER_EMAIL: process.env.BREVO_SENDER_EMAIL || 'no-reply@asrvtech.com',
   BREVO_SENDER_NAME: process.env.BREVO_SENDER_NAME || 'SalonGo by ASRVTech',

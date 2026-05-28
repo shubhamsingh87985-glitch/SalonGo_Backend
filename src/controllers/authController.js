@@ -10,6 +10,7 @@ const { sendSuccess } = require('../utils/response');
 const { signAccessToken, signRefreshToken, hashToken } = require('../utils/tokens');
 const { normalizeRole } = require('../utils/normalizeRole');
 const { issueOtp, verifyOtp } = require('../services/otpService');
+const { issuePasswordResetLink, verifyPasswordResetToken } = require('../services/passwordResetService');
 const { audit } = require('../services/auditService');
 
 const modelByRole = {
@@ -127,6 +128,11 @@ exports.resendOtp = asyncHandler(async (req, res) => {
   const account = await Model.findOne({ [emailField]: email.toLowerCase() });
   if (!account) throw new AppError('Account not found', 404);
 
+  if (purpose === 'forgot_password') {
+    await issuePasswordResetLink({ identifier: email, role, name: account[nameField] });
+    return sendSuccess(res, 200, 'Password reset link sent successfully');
+  }
+
   await issueOtp({ identifier: email, purpose, name: account[nameField] });
   sendSuccess(res, 200, 'OTP sent successfully');
 });
@@ -140,14 +146,14 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   const account = await Model.findOne({ [emailField]: email.toLowerCase(), isDeleted: false });
   if (!account) throw new AppError('Account not found', 404);
 
-  await issueOtp({ identifier: email, purpose: 'forgot_password', name: account[nameField] });
-  sendSuccess(res, 200, 'Password reset OTP sent successfully');
+  await issuePasswordResetLink({ identifier: email, role, name: account[nameField] });
+  sendSuccess(res, 200, 'Password reset link sent successfully');
 });
 
 exports.resetPassword = asyncHandler(async (req, res) => {
-  const { email, otp, password } = req.body;
+  const { email, token, password } = req.body;
   const role = normalizeRole(req.body.role);
-  await verifyOtp({ identifier: email, purpose: 'forgot_password', otp });
+  await verifyPasswordResetToken({ identifier: email, role, token });
 
   const Model = modelByRole[role];
   const emailField = role === ROLES.SALON_OWNER ? 'businessEmail' : 'email';

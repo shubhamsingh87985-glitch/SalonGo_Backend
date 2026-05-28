@@ -31,7 +31,7 @@ exports.email = [
 
 exports.resetPassword = [
   body('email').isEmail().normalizeEmail(),
-  body('otp').isString().matches(/^[0-9]{6}$/),
+  body('token').isString().trim().isLength({ min: 32 }).withMessage('Valid reset token is required'),
   body('password').isStrongPassword({ minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 0 }),
   body('role').optional().isIn(roleInputs)
 ];
