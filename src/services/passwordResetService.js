@@ -58,16 +58,23 @@ async function issuePasswordResetLink({ identifier, role, name }) {
 }
 
 async function verifyPasswordResetToken({ identifier, role, token }) {
-  const record = await PasswordResetToken.findOne({
-    identifier: identifier.toLowerCase(),
-    role,
+  const query = {
     tokenHash: hashToken(token),
     consumedAt: { $exists: false },
     expiresAt: { $gt: new Date() }
-  }).sort({ createdAt: -1 });
+  };
+
+  if (identifier) query.identifier = identifier.toLowerCase();
+  if (role) query.role = role;
+
+  const record = await PasswordResetToken.findOne(query).sort({ createdAt: -1 });
 
   if (!record) throw new AppError('Password reset link is invalid or expired', 400);
 
+  return record;
+}
+
+async function consumePasswordResetToken(record) {
   record.consumedAt = new Date();
   await record.save();
   return true;
@@ -75,5 +82,6 @@ async function verifyPasswordResetToken({ identifier, role, token }) {
 
 module.exports = {
   issuePasswordResetLink,
-  verifyPasswordResetToken
+  verifyPasswordResetToken,
+  consumePasswordResetToken
 };

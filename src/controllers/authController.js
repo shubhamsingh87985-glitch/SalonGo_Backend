@@ -10,7 +10,11 @@ const { sendSuccess } = require('../utils/response');
 const { signAccessToken, signRefreshToken, hashToken } = require('../utils/tokens');
 const { normalizeRole } = require('../utils/normalizeRole');
 const { issueOtp, verifyOtp } = require('../services/otpService');
-const { issuePasswordResetLink, verifyPasswordResetToken } = require('../services/passwordResetService');
+const {
+  issuePasswordResetLink,
+  verifyPasswordResetToken,
+  consumePasswordResetToken
+} = require('../services/passwordResetService');
 const { audit } = require('../services/auditService');
 const { resetPasswordSuccessPage } = require('../templates/resetPasswordPage');
 
@@ -153,18 +157,20 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, token, password } = req.body;
-  const role = normalizeRole(req.body.role);
-  await verifyPasswordResetToken({ identifier: email, role, token });
+  const requestedRole = req.body.role ? normalizeRole(req.body.role) : undefined;
+  const resetToken = await verifyPasswordResetToken({ identifier: email, role: requestedRole, token });
+  const role = resetToken.role;
 
   const Model = modelByRole[role];
   const emailField = role === ROLES.SALON_OWNER ? 'businessEmail' : 'email';
-  const account = await Model.findOne({ [emailField]: email.toLowerCase(), isDeleted: false });
+  const account = await Model.findOne({ [emailField]: resetToken.identifier, isDeleted: false });
   if (!account) throw new AppError('Account not found', 404);
 
   account.password = password;
   account.refreshTokenHash = undefined;
-  account.tokenVersion += 1;
+  account.tokenVersion = (account.tokenVersion || 0) + 1;
   await account.save();
+  await consumePasswordResetToken(resetToken);
 
   if (req.is('application/x-www-form-urlencoded')) {
     return res.status(200).send(resetPasswordSuccessPage());
