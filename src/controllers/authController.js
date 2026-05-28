@@ -32,6 +32,15 @@ function authPayload(account) {
   };
 }
 
+function successBackUrl() {
+  if (env.APP_URL) return env.APP_URL;
+  if (!env.CLIENT_URL || env.CLIENT_URL === '*') return undefined;
+
+  const firstClientUrl = env.CLIENT_URL.split(',').map((url) => url.trim()).find(Boolean);
+  if (!firstClientUrl || firstClientUrl.includes('localhost')) return undefined;
+  return firstClientUrl;
+}
+
 async function persistRefreshToken(account, refreshToken) {
   account.refreshTokenHash = hashToken(refreshToken);
   account.lastLoginAt = new Date();
@@ -173,7 +182,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   await consumePasswordResetToken(resetToken);
 
   if (req.is('application/x-www-form-urlencoded')) {
-    return res.status(200).send(resetPasswordSuccessPage());
+    return res.status(200).send(resetPasswordSuccessPage({ backUrl: successBackUrl() }));
   }
 
   sendSuccess(res, 200, 'Password reset successful');

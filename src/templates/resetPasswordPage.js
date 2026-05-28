@@ -39,7 +39,11 @@ function resetPasswordPage({ email = '', token = '', role = 'CUSTOMER' }) {
 </html>`;
 }
 
-function resetPasswordSuccessPage() {
+function resetPasswordSuccessPage({ backUrl } = {}) {
+  const action = backUrl
+    ? `<a href="${escapeHtml(backUrl)}" target="_blank" rel="noopener" style="display:inline-block;border-radius:10px;background:#111827;color:#ffffff;text-decoration:none;padding:14px 22px;font-size:15px;font-weight:700;">Back to SalonGo App</a>`
+    : `<button type="button" onclick="window.close();setTimeout(function(){document.body.innerHTML='';},150);" style="border:0;border-radius:10px;background:#111827;color:#ffffff;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;">Close this page</button>`;
+
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -51,14 +55,15 @@ function resetPasswordSuccessPage() {
     <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 14px;box-sizing:border-box;">
       <section style="width:100%;max-width:470px;background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(17,24,39,0.16);">
         <div style="padding:34px 28px;background:linear-gradient(135deg,#052e2b 0%,#065f46 48%,#b45309 100%);color:#ffffff;text-align:center;">
-          <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.35);display:inline-flex;align-items:center;justify-content:center;margin:0 0 18px;font-size:38px;font-weight:700;">✓</div>
+          <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.35);display:inline-flex;align-items:center;justify-content:center;margin:0 0 18px;font-size:38px;font-weight:700;">&#10003;</div>
           <div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#fde68a;font-weight:700;">SalonGo Secure</div>
           <h1 style="margin:12px 0 10px;font-size:30px;line-height:1.2;">Password reset successfully</h1>
           <p style="margin:0;line-height:1.65;color:#ecfdf5;">Your SalonGo password has been updated. You can now sign in with your new password.</p>
         </div>
         <div style="padding:26px 28px;text-align:center;">
           <p style="margin:0 0 18px;color:#4b5563;line-height:1.6;">For your security, all old sessions were refreshed and this reset link cannot be used again.</p>
-          <a href="/" style="display:inline-block;border-radius:10px;background:#111827;color:#ffffff;text-decoration:none;padding:14px 22px;font-size:15px;font-weight:700;">Back to SalonGo</a>
+          ${action}
+          <p style="margin:18px 0 0;color:#6b7280;font-size:12px;line-height:1.5;">You can return to the SalonGo app and sign in with your new password.</p>
         </div>
       </section>
     </main>
