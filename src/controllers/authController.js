@@ -12,6 +12,7 @@ const { normalizeRole } = require('../utils/normalizeRole');
 const { issueOtp, verifyOtp } = require('../services/otpService');
 const { issuePasswordResetLink, verifyPasswordResetToken } = require('../services/passwordResetService');
 const { audit } = require('../services/auditService');
+const { resetPasswordSuccessPage } = require('../templates/resetPasswordPage');
 
 const modelByRole = {
   [ROLES.CUSTOMER]: User,
@@ -164,6 +165,10 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   account.refreshTokenHash = undefined;
   account.tokenVersion += 1;
   await account.save();
+
+  if (req.is('application/x-www-form-urlencoded')) {
+    return res.status(200).send(resetPasswordSuccessPage());
+  }
 
   sendSuccess(res, 200, 'Password reset successful');
 });
