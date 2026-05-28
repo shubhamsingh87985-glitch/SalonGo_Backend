@@ -12,6 +12,7 @@ const allowedMimeTypes = [
   'image/webp',
   'application/pdf'
 ];
+const allowedImageMimeTypes = allowedMimeTypes.filter((type) => type.startsWith('image/'));
 
 const multerUpload = multer({
   storage: multer.memoryStorage(),
@@ -22,6 +23,20 @@ const multerUpload = multer({
   fileFilter: (req, file, cb) => {
     if (!allowedMimeTypes.includes(file.mimetype)) {
       return cb(new AppError('Only JPG, PNG, WEBP, and PDF files are allowed', 400));
+    }
+    cb(null, true);
+  }
+});
+
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1
+  },
+  fileFilter: (req, file, cb) => {
+    if (!allowedImageMimeTypes.includes(file.mimetype)) {
+      return cb(new AppError('Only JPG, PNG, and WEBP image files are allowed', 400));
     }
     cb(null, true);
   }
@@ -97,6 +112,13 @@ const uploadFieldsToCloudinary = asyncHandler(async (req, res, next) => {
   next();
 });
 
+const uploadAnyToCloudinary = asyncHandler(async (req, res, next) => {
+  if (Array.isArray(req.files)) {
+    req.files = await mapWithConcurrency(req.files, 3, uploadToCloudinary);
+  }
+  next();
+});
+
 async function uploadFilesObject(files = {}) {
   const entries = await Promise.all(Object.entries(files).map(async ([field, fieldFiles]) => {
     const uploaded = await mapWithConcurrency(fieldFiles, 3, uploadToCloudinary);
@@ -110,5 +132,7 @@ module.exports = {
   uploadFieldsToCloudinary,
   uploadFilesObject,
   single: (fieldName) => [multerUpload.single(fieldName), uploadSingleToCloudinary],
-  fields: (fields) => [multerUpload.fields(fields), uploadFieldsToCloudinary]
+  fields: (fields) => [multerUpload.fields(fields), uploadFieldsToCloudinary],
+  any: () => [multerUpload.any(), uploadAnyToCloudinary],
+  imageAny: () => [imageUpload.any(), uploadAnyToCloudinary]
 };

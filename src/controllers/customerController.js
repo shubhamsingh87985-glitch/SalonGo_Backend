@@ -11,6 +11,10 @@ const profileImageFieldOrder = ['profileImage', 'profilePic', 'avatar'];
 function getUploadedProfileImage(req) {
   if (req.file) return req.file;
 
+  if (Array.isArray(req.files)) {
+    return req.files.find((file) => file.mimetype?.startsWith('image/'));
+  }
+
   for (const field of profileImageFieldOrder) {
     if (req.files?.[field]?.[0]) return req.files[field][0];
   }

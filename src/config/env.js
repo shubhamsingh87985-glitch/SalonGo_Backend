@@ -20,9 +20,9 @@ const env = {
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
   SMTP_FROM: process.env.SMTP_FROM || 'SalonGo by ASRVTech <no-reply@asrvtech.com>',
-  CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
+  CLOUDINARY_NAME: process.env.CLOUDINARY_NAME || process.env.CLOUDINARY_CLOUD_NAME,
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
-  CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET,
+  CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET || process.env.CLOUDINARY_API_SECRET,
   ADMIN_EMAIL: process.env.ADMIN_EMAIL,
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD
 };
