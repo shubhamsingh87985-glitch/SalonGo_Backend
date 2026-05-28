@@ -13,9 +13,21 @@ const modelByRole = {
   [ROLES.ADMIN]: Admin
 };
 
+function extractToken(req) {
+  const authHeader = req.headers.authorization;
+  const headerToken = req.headers['x-access-token'] || req.headers['x-auth-token'];
+
+  if (authHeader) {
+    const [scheme, value] = authHeader.split(' ');
+    if (/^bearer$/i.test(scheme) && value) return value;
+    return authHeader;
+  }
+
+  return headerToken || req.cookies?.accessToken;
+}
+
 module.exports = asyncHandler(async (req, res, next) => {
-  const header = req.headers.authorization;
-  const token = header?.startsWith('Bearer ') ? header.split(' ')[1] : req.cookies?.accessToken;
+  const token = extractToken(req);
 
   if (!token) throw new AppError('Authentication required', 401);
 

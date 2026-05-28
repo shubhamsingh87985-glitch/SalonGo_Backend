@@ -127,10 +127,13 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
     { [emailField]: email.toLowerCase() },
     { isVerified: true },
     { new: true }
-  );
+  ).select('+refreshTokenHash');
   if (!account) throw new AppError('Account not found', 404);
 
-  sendSuccess(res, 200, 'Email verified successfully', { user: account });
+  const payload = authPayload(account);
+  await persistRefreshToken(account, payload.refreshToken);
+
+  sendSuccess(res, 200, 'Email verified successfully', payload);
 });
 
 exports.resendOtp = asyncHandler(async (req, res) => {
