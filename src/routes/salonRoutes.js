@@ -13,21 +13,29 @@ const bookingValidators = require('../validators/bookingValidators');
 const { ROLES } = require('../constants/roles');
 
 const router = express.Router();
+const salonDocumentFields = [
+  { name: 'salonImages', maxCount: 8 },
+  { name: 'businessLicense', maxCount: 1 },
+  { name: 'ownerIdProof', maxCount: 1 }
+];
 
 router.get('/public', salonController.listPublicSalons);
 router.get('/public/:slug', salonController.getPublicSalon);
-router.post('/register', validators.registerSalon, validate, salonController.registerSalonOwner);
+router.post(
+  '/register',
+  upload.memoryFields(salonDocumentFields),
+  validators.registerSalon,
+  validate,
+  upload.uploadFieldsToCloudinary,
+  salonController.registerSalonOwner
+);
 
 router.use(authMiddleware, roleMiddleware(ROLES.SALON_OWNER));
 
 router.post(
   '/upload-documents',
   verifiedMiddleware,
-  upload.fields([
-    { name: 'salonImages', maxCount: 8 },
-    { name: 'businessLicense', maxCount: 1 },
-    { name: 'ownerIdProof', maxCount: 1 }
-  ]),
+  upload.fields(salonDocumentFields),
   salonController.uploadDocuments
 );
 router.get('/status', salonController.getStatus);

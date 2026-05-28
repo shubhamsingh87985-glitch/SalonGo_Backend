@@ -9,6 +9,25 @@ const { issueOtp } = require('../services/otpService');
 const { parseCloudinaryFile } = require('../services/uploadService');
 const { audit } = require('../services/auditService');
 
+function applyUploadedDocuments(owner, files = {}) {
+  let hasDocuments = false;
+
+  if (files.salonImages) {
+    owner.salonImages = files.salonImages.map(parseCloudinaryFile);
+    hasDocuments = true;
+  }
+  if (files.businessLicense?.[0]) {
+    owner.businessLicense = parseCloudinaryFile(files.businessLicense[0]);
+    hasDocuments = true;
+  }
+  if (files.ownerIdProof?.[0]) {
+    owner.ownerIdProof = parseCloudinaryFile(files.ownerIdProof[0]);
+    hasDocuments = true;
+  }
+
+  return hasDocuments;
+}
+
 exports.registerSalonOwner = asyncHandler(async (req, res) => {
   const {
     ownerName,
@@ -22,7 +41,7 @@ exports.registerSalonOwner = asyncHandler(async (req, res) => {
     yearsInBusiness
   } = req.body;
 
-  const owner = await SalonOwner.create({
+  const owner = new SalonOwner({
     ownerName,
     salonName,
     businessEmail,
@@ -34,6 +53,12 @@ exports.registerSalonOwner = asyncHandler(async (req, res) => {
     yearsInBusiness,
     verificationStatus: 'pending'
   });
+
+  if (applyUploadedDocuments(owner, req.files)) {
+    owner.verificationStatus = 'under_review';
+  }
+
+  await owner.save();
 
   const otpResult = await issueOtp({
     identifier: businessEmail,
@@ -53,11 +78,7 @@ exports.registerSalonOwner = asyncHandler(async (req, res) => {
 
 exports.uploadDocuments = asyncHandler(async (req, res) => {
   const owner = req.user;
-  const files = req.files || {};
-
-  if (files.salonImages) owner.salonImages = files.salonImages.map(parseCloudinaryFile);
-  if (files.businessLicense?.[0]) owner.businessLicense = parseCloudinaryFile(files.businessLicense[0]);
-  if (files.ownerIdProof?.[0]) owner.ownerIdProof = parseCloudinaryFile(files.ownerIdProof[0]);
+  applyUploadedDocuments(owner, req.files);
 
   owner.verificationStatus = 'under_review';
   await owner.save();

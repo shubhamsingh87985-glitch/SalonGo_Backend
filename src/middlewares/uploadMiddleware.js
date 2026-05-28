@@ -93,6 +93,8 @@ const uploadFieldsToCloudinary = asyncHandler(async (req, res, next) => {
 });
 
 module.exports = {
+  memoryFields: (fields) => multerUpload.fields(fields),
+  uploadFieldsToCloudinary,
   single: (fieldName) => [multerUpload.single(fieldName), uploadSingleToCloudinary],
   fields: (fields) => [multerUpload.fields(fields), uploadFieldsToCloudinary]
 };
