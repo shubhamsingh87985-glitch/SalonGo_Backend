@@ -6,8 +6,22 @@ exports.registerSalon = [
   body('businessEmail').isEmail().normalizeEmail(),
   body('businessPhone').isString().isLength({ min: 7, max: 20 }),
   body('password').isStrongPassword({ minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 0 }),
-  body('totalSeats').optional().isInt({ min: 1 }),
-  body('yearsInBusiness').optional().isInt({ min: 0 })
+  body('totalSeats')
+    .optional()
+    .customSanitizer((value) => {
+      if (typeof value !== 'string') return value;
+      const match = value.match(/\d+/);
+      return match ? Number(match[0]) : value;
+    })
+    .isInt({ min: 1 }),
+  body('yearsInBusiness')
+    .optional()
+    .customSanitizer((value) => {
+      if (typeof value !== 'string') return value;
+      const match = value.match(/\d+/);
+      return match ? Number(match[0]) : value;
+    })
+    .isInt({ min: 0 })
 ];
 
 exports.updateSalon = [

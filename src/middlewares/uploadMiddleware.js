@@ -2,6 +2,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { Readable } = require('stream');
 const cloudinary = require('../config/cloudinary');
+const { env } = require('../config/env');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -25,6 +26,12 @@ const multerUpload = multer({
     cb(null, true);
   }
 });
+
+function ensureCloudinaryConfigured() {
+  if (!env.CLOUDINARY_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_SECRET) {
+    throw new AppError('Cloudinary is not configured on the server. Please add Cloudinary environment variables.', 500);
+  }
+}
 
 function uploadBufferToCloudinary(buffer, options) {
   return new Promise((resolve, reject) => {
@@ -55,6 +62,8 @@ async function mapWithConcurrency(items, concurrency, mapper) {
 }
 
 async function uploadToCloudinary(file) {
+  ensureCloudinaryConfigured();
+
   const isPdf = file.mimetype === 'application/pdf';
   const buffer = isPdf
     ? file.buffer
