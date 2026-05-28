@@ -12,9 +12,9 @@ exports.register = [
 ];
 
 exports.login = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isString().isLength({ min: 8 }),
-  body('role').optional().isIn(roleInputs)
+  body('email').isEmail().withMessage('Enter a valid email address').normalizeEmail(),
+  body('password').isString().notEmpty().withMessage('Password is required'),
+  body('role').optional().isIn(roleInputs).withMessage('Role must be customer, owner, or admin')
 ];
 
 exports.otp = [
