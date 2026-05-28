@@ -32,7 +32,11 @@ const userSchema = new mongoose.Schema({
   },
   profileImage: {
     url: String,
-    publicId: String
+    publicId: String,
+    resourceType: {
+      type: String,
+      default: 'image'
+    }
   },
   favoriteSalons: [{
     type: mongoose.Schema.Types.ObjectId,
