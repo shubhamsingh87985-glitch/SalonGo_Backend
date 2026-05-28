@@ -46,9 +46,7 @@ exports.registerSalonOwner = asyncHandler(async (req, res) => {
   sendSuccess(
     res,
     201,
-    otpResult.sent
-      ? 'Salon owner registration submitted. Verify email and wait for admin approval.'
-      : otpResult.message,
+    'Salon owner registration submitted. Verify email and wait for admin approval.',
     { owner, otpEmailSent: otpResult.sent }
   );
 });

@@ -20,7 +20,7 @@ async function issueOtp({ identifier, purpose, name, throwOnEmailFailure = true 
     }
     return {
       sent: false,
-      message: 'Account created, but OTP email could not be sent. Please use resend OTP after email is configured.'
+      message: 'Registration successful. OTP email could not be sent right now. Please try resending OTP.'
     };
   }
 }

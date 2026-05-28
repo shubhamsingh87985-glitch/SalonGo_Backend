@@ -47,7 +47,7 @@ exports.register = asyncHandler(async (req, res) => {
   sendSuccess(
     res,
     201,
-    otpResult.sent ? 'Registration successful. Please verify your email OTP.' : otpResult.message,
+    'Registration successful. Please verify your email OTP.',
     { user, otpEmailSent: otpResult.sent }
   );
 });
