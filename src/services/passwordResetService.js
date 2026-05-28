@@ -26,8 +26,8 @@ function resetExpiryMs() {
 
 function buildResetLink({ identifier, role, token }) {
   const resetPath = '/reset-password';
-  const baseUrl = env.PASSWORD_RESET_URL || env.CLIENT_URL || 'http://localhost:3000';
-  const resetUrl = new URL(baseUrl === '*' ? `http://localhost:3000${resetPath}` : baseUrl);
+  const baseUrl = env.PASSWORD_RESET_URL || env.CLIENT_URL || 'https://salongo-backend.onrender.com';
+  const resetUrl = new URL(baseUrl === '*' ? `https://salongo-backend.onrender.com${resetPath}` : baseUrl);
 
   if (!env.PASSWORD_RESET_URL && resetUrl.pathname === '/') {
     resetUrl.pathname = resetPath;

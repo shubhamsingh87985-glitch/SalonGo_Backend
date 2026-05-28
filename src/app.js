@@ -13,6 +13,7 @@ const routes = require('./routes');
 const AppError = require('./utils/AppError');
 const errorHandler = require('./middlewares/errorHandlerMiddleware');
 const sanitizeBody = require('./middlewares/sanitizeBodyMiddleware');
+const { resetPasswordPage } = require('./templates/resetPasswordPage');
 
 const app = express();
 
@@ -51,6 +52,10 @@ app.get('/health', (req, res) => {
       uptime: process.uptime()
     }
   });
+});
+
+app.get('/reset-password', (req, res) => {
+  res.status(200).send(resetPasswordPage(req.query));
 });
 
 app.use('/api/v1', routes);

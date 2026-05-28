@@ -123,9 +123,10 @@ Authorization: Bearer <accessToken>
 | POST | `/api/v1/auth/refresh-token` | Rotate refresh token |
 | POST | `/api/v1/auth/logout` | Logout current account |
 | POST | `/api/v1/auth/verify-otp` | Verify email OTP |
-| POST | `/api/v1/auth/resend-otp` | Resend email or reset OTP |
-| POST | `/api/v1/auth/forgot-password` | Send password reset OTP |
-| POST | `/api/v1/auth/reset-password` | Reset password with OTP |
+| POST | `/api/v1/auth/resend-otp` | Resend email OTP or password reset link |
+| POST | `/api/v1/auth/forgot-password` | Send password reset link |
+| POST | `/api/v1/auth/reset-password` | Reset password with token |
+| GET | `/reset-password` | Backend-hosted password reset form |
 
 ### Customer
 
