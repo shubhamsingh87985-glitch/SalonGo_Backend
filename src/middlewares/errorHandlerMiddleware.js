@@ -56,7 +56,9 @@ module.exports = (error, req, res, next) => {
 
   res.status(statusCode).json({
     success: false,
-    message: statusCode === 500 && env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    message: statusCode === 500 && env.NODE_ENV === 'production' && !error.isOperational
+      ? 'Internal server error'
+      : error.message,
     details: error.details || undefined,
     stack: env.NODE_ENV === 'development' ? error.stack : undefined
   });

@@ -4,10 +4,12 @@ const Salon = require('../models/Salon');
 const Queue = require('../models/Queue');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 const { sendSuccess } = require('../utils/response');
 const { issueOtp } = require('../services/otpService');
 const { parseCloudinaryFile } = require('../services/uploadService');
 const { audit } = require('../services/auditService');
+const { uploadFilesObject } = require('../middlewares/uploadMiddleware');
 
 function applyUploadedDocuments(owner, files = {}) {
   let hasDocuments = false;
@@ -54,11 +56,25 @@ exports.registerSalonOwner = asyncHandler(async (req, res) => {
     verificationStatus: 'pending'
   });
 
-  if (applyUploadedDocuments(owner, req.files)) {
-    owner.verificationStatus = 'under_review';
-  }
-
   await owner.save();
+
+  let documentUpload = { uploaded: false };
+  if (Object.keys(req.files || {}).length) {
+    try {
+      const uploadedFiles = await uploadFilesObject(req.files);
+      if (applyUploadedDocuments(owner, uploadedFiles)) {
+        owner.verificationStatus = 'under_review';
+        await owner.save();
+        documentUpload = { uploaded: true };
+      }
+    } catch (error) {
+      logger.error(`Salon registration document upload failed for ${businessEmail}: ${error.message}`);
+      documentUpload = {
+        uploaded: false,
+        message: 'Registration completed, but documents could not be uploaded. Please upload documents after email verification.'
+      };
+    }
+  }
 
   const otpResult = await issueOtp({
     identifier: businessEmail,
@@ -66,13 +82,17 @@ exports.registerSalonOwner = asyncHandler(async (req, res) => {
     name: ownerName,
     throwOnEmailFailure: false
   });
-  await audit(req, 'salon_owner.registered', { model: 'SalonOwner', id: owner._id });
+  try {
+    await audit(req, 'salon_owner.registered', { model: 'SalonOwner', id: owner._id });
+  } catch (error) {
+    logger.error(`Audit log failed for salon owner registration ${owner._id}: ${error.message}`);
+  }
 
   sendSuccess(
     res,
     201,
     'Salon owner registration submitted. Verify email and wait for admin approval.',
-    { owner, otpEmailSent: otpResult.sent }
+    { owner, otpEmailSent: otpResult.sent, documentUpload }
   );
 });
 

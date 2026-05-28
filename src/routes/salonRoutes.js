@@ -26,7 +26,6 @@ router.post(
   upload.memoryFields(salonDocumentFields),
   validators.registerSalon,
   validate,
-  upload.uploadFieldsToCloudinary,
   salonController.registerSalonOwner
 );
 

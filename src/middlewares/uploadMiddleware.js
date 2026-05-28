@@ -29,7 +29,7 @@ const multerUpload = multer({
 
 function ensureCloudinaryConfigured() {
   if (!env.CLOUDINARY_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_SECRET) {
-    throw new AppError('Cloudinary is not configured on the server. Please add Cloudinary environment variables.', 500);
+    throw new AppError('Cloudinary is not configured on the server. Please add Cloudinary environment variables.', 503);
   }
 }
 
@@ -93,17 +93,22 @@ const uploadSingleToCloudinary = asyncHandler(async (req, res, next) => {
 
 const uploadFieldsToCloudinary = asyncHandler(async (req, res, next) => {
   const files = req.files || {};
+  req.files = await uploadFilesObject(files);
+  next();
+});
+
+async function uploadFilesObject(files = {}) {
   const entries = await Promise.all(Object.entries(files).map(async ([field, fieldFiles]) => {
     const uploaded = await mapWithConcurrency(fieldFiles, 3, uploadToCloudinary);
     return [field, uploaded];
   }));
-  req.files = Object.fromEntries(entries);
-  next();
-});
+  return Object.fromEntries(entries);
+}
 
 module.exports = {
   memoryFields: (fields) => multerUpload.fields(fields),
   uploadFieldsToCloudinary,
+  uploadFilesObject,
   single: (fieldName) => [multerUpload.single(fieldName), uploadSingleToCloudinary],
   fields: (fields) => [multerUpload.fields(fields), uploadFieldsToCloudinary]
 };
