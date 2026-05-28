@@ -35,10 +35,22 @@ exports.registerSalonOwner = asyncHandler(async (req, res) => {
     verificationStatus: 'pending'
   });
 
-  await issueOtp({ identifier: businessEmail, purpose: 'email_verification', name: ownerName });
+  const otpResult = await issueOtp({
+    identifier: businessEmail,
+    purpose: 'email_verification',
+    name: ownerName,
+    throwOnEmailFailure: false
+  });
   await audit(req, 'salon_owner.registered', { model: 'SalonOwner', id: owner._id });
 
-  sendSuccess(res, 201, 'Salon owner registration submitted. Verify email and wait for admin approval.', { owner });
+  sendSuccess(
+    res,
+    201,
+    otpResult.sent
+      ? 'Salon owner registration submitted. Verify email and wait for admin approval.'
+      : otpResult.message,
+    { owner, otpEmailSent: otpResult.sent }
+  );
 });
 
 exports.uploadDocuments = asyncHandler(async (req, res) => {

@@ -51,7 +51,8 @@ async function sendEmail(payload) {
   try {
     await sendWithBrevo(payload);
   } catch (brevoError) {
-    logger.warn(`Brevo email failed: ${brevoError.message}`);
+    const brevoDetails = brevoError.response?.data ? JSON.stringify(brevoError.response.data) : brevoError.message;
+    logger.warn(`Brevo email failed: ${brevoDetails}`);
     await sendWithSmtp(payload);
   }
 }

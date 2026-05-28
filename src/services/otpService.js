@@ -3,12 +3,26 @@ const { generateOtp } = require('../utils/tokens');
 const { otpEmail } = require('../templates/emailTemplates');
 const { sendEmail } = require('./emailService');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
-async function issueOtp({ identifier, purpose, name }) {
+async function issueOtp({ identifier, purpose, name, throwOnEmailFailure = true }) {
   const otp = generateOtp();
   await OTP.createOtp(identifier, purpose, otp);
   const template = otpEmail({ name, otp, purpose });
-  await sendEmail({ to: identifier, ...template });
+
+  try {
+    await sendEmail({ to: identifier, ...template });
+    return { sent: true };
+  } catch (error) {
+    logger.error(`OTP email failed for ${identifier}: ${error.message}`);
+    if (throwOnEmailFailure) {
+      throw new AppError('OTP email could not be sent. Please check email configuration and try again.', 502);
+    }
+    return {
+      sent: false,
+      message: 'Account created, but OTP email could not be sent. Please use resend OTP after email is configured.'
+    };
+  }
 }
 
 async function verifyOtp({ identifier, purpose, otp }) {

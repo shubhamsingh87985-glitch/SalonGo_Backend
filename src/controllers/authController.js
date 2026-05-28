@@ -36,10 +36,20 @@ exports.register = asyncHandler(async (req, res) => {
   const { fullName, email, phone, password } = req.body;
 
   const user = await User.create({ fullName, email, phone, password, role: ROLES.CUSTOMER });
-  await issueOtp({ identifier: email, purpose: 'email_verification', name: fullName });
+  const otpResult = await issueOtp({
+    identifier: email,
+    purpose: 'email_verification',
+    name: fullName,
+    throwOnEmailFailure: false
+  });
 
   await audit(req, 'customer.registered', { model: 'User', id: user._id });
-  sendSuccess(res, 201, 'Registration successful. Please verify your email OTP.', { user });
+  sendSuccess(
+    res,
+    201,
+    otpResult.sent ? 'Registration successful. Please verify your email OTP.' : otpResult.message,
+    { user, otpEmailSent: otpResult.sent }
+  );
 });
 
 exports.login = asyncHandler(async (req, res) => {
