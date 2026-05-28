@@ -1,5 +1,6 @@
 const multer = require('multer');
 const sharp = require('sharp');
+const { Readable } = require('stream');
 const cloudinary = require('../config/cloudinary');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
@@ -25,18 +26,45 @@ const multerUpload = multer({
   }
 });
 
+function uploadBufferToCloudinary(buffer, options) {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+
+    Readable.from(buffer).pipe(uploadStream);
+  });
+}
+
+async function mapWithConcurrency(items, concurrency, mapper) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex]);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, worker);
+  await Promise.all(workers);
+  return results;
+}
+
 async function uploadToCloudinary(file) {
   const isPdf = file.mimetype === 'application/pdf';
   const buffer = isPdf
     ? file.buffer
     : await sharp(file.buffer)
       .rotate()
-      .resize({ width: 1600, withoutEnlargement: true })
-      .webp({ quality: 82 })
+      .resize({ width: 1280, withoutEnlargement: true })
+      .webp({ quality: 76, effort: 4 })
       .toBuffer();
 
-  const dataUri = `data:${isPdf ? file.mimetype : 'image/webp'};base64,${buffer.toString('base64')}`;
-  const result = await cloudinary.uploader.upload(dataUri, {
+  const result = await uploadBufferToCloudinary(buffer, {
     folder: `salongo/${file.fieldname}`,
     resource_type: isPdf ? 'raw' : 'image'
   });
@@ -57,7 +85,7 @@ const uploadSingleToCloudinary = asyncHandler(async (req, res, next) => {
 const uploadFieldsToCloudinary = asyncHandler(async (req, res, next) => {
   const files = req.files || {};
   const entries = await Promise.all(Object.entries(files).map(async ([field, fieldFiles]) => {
-    const uploaded = await Promise.all(fieldFiles.map(uploadToCloudinary));
+    const uploaded = await mapWithConcurrency(fieldFiles, 3, uploadToCloudinary);
     return [field, uploaded];
   }));
   req.files = Object.fromEntries(entries);
