@@ -8,6 +8,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const { sendSuccess } = require('../utils/response');
 const { signAccessToken, signRefreshToken, hashToken } = require('../utils/tokens');
+const { normalizeRole } = require('../utils/normalizeRole');
 const { issueOtp, verifyOtp } = require('../services/otpService');
 const { audit } = require('../services/auditService');
 
@@ -42,7 +43,8 @@ exports.register = asyncHandler(async (req, res) => {
 });
 
 exports.login = asyncHandler(async (req, res) => {
-  const { email, password, role = ROLES.CUSTOMER } = req.body;
+  const { email, password } = req.body;
+  const role = normalizeRole(req.body.role);
   const Model = modelByRole[role];
   if (!Model) throw new AppError('Invalid role', 400);
 
@@ -90,7 +92,8 @@ exports.logout = asyncHandler(async (req, res) => {
 });
 
 exports.verifyOtp = asyncHandler(async (req, res) => {
-  const { email, otp, role = ROLES.CUSTOMER } = req.body;
+  const { email, otp } = req.body;
+  const role = normalizeRole(req.body.role);
   await verifyOtp({ identifier: email, purpose: 'email_verification', otp });
 
   const Model = modelByRole[role];
@@ -106,7 +109,8 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
 });
 
 exports.resendOtp = asyncHandler(async (req, res) => {
-  const { email, purpose = 'email_verification', role = ROLES.CUSTOMER } = req.body;
+  const { email, purpose = 'email_verification' } = req.body;
+  const role = normalizeRole(req.body.role);
   const Model = modelByRole[role];
   const emailField = role === ROLES.SALON_OWNER ? 'businessEmail' : 'email';
   const nameField = role === ROLES.SALON_OWNER ? 'ownerName' : 'fullName';
@@ -118,7 +122,8 @@ exports.resendOtp = asyncHandler(async (req, res) => {
 });
 
 exports.forgotPassword = asyncHandler(async (req, res) => {
-  const { email, role = ROLES.CUSTOMER } = req.body;
+  const { email } = req.body;
+  const role = normalizeRole(req.body.role);
   const Model = modelByRole[role];
   const emailField = role === ROLES.SALON_OWNER ? 'businessEmail' : 'email';
   const nameField = role === ROLES.SALON_OWNER ? 'ownerName' : 'fullName';
@@ -130,7 +135,8 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 });
 
 exports.resetPassword = asyncHandler(async (req, res) => {
-  const { email, otp, password, role = ROLES.CUSTOMER } = req.body;
+  const { email, otp, password } = req.body;
+  const role = normalizeRole(req.body.role);
   await verifyOtp({ identifier: email, purpose: 'forgot_password', otp });
 
   const Model = modelByRole[role];
