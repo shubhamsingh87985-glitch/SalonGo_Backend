@@ -40,7 +40,7 @@ module.exports = (error, req, res, next) => {
     logger.error(`Cloudinary upload failed: ${error.message}`);
     return res.status(502).json({
       success: false,
-      message: 'Image upload service failed. Please try again.'
+      message: 'File upload service failed. Please try again.'
     });
   }
 

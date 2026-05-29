@@ -8,11 +8,18 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const allowedMimeTypes = [
   'image/jpeg',
+  'image/jpg',
+  'image/pjpeg',
   'image/png',
   'image/webp',
-  'application/pdf'
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ];
 const allowedImageMimeTypes = allowedMimeTypes.filter((type) => type.startsWith('image/'));
+const rawUploadMimeTypes = allowedMimeTypes.filter((type) => !type.startsWith('image/'));
 
 const multerUpload = multer({
   storage: multer.memoryStorage(),
@@ -22,7 +29,7 @@ const multerUpload = multer({
   },
   fileFilter: (req, file, cb) => {
     if (!allowedMimeTypes.includes(file.mimetype)) {
-      return cb(new AppError('Only JPG, PNG, WEBP, and PDF files are allowed', 400));
+      return cb(new AppError('Only JPG, JPEG, PNG, WEBP, PDF, DOC, DOCX, XLS, and XLSX files are allowed', 400));
     }
     cb(null, true);
   }
@@ -79,8 +86,13 @@ async function mapWithConcurrency(items, concurrency, mapper) {
 async function uploadToCloudinary(file) {
   ensureCloudinaryConfigured();
 
-  const isPdf = file.mimetype === 'application/pdf';
-  const buffer = isPdf
+  const isImage = file.mimetype?.startsWith('image/');
+  const isRawUpload = rawUploadMimeTypes.includes(file.mimetype);
+  if (!isImage && !isRawUpload) {
+    throw new AppError('Unsupported upload file type', 400);
+  }
+
+  const buffer = isRawUpload
     ? file.buffer
     : await sharp(file.buffer)
       .rotate()
@@ -90,7 +102,7 @@ async function uploadToCloudinary(file) {
 
   const result = await uploadBufferToCloudinary(buffer, {
     folder: `salongo/${file.fieldname}`,
-    resource_type: isPdf ? 'raw' : 'image'
+    resource_type: isRawUpload ? 'raw' : 'image'
   });
 
   return {
